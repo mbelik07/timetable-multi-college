@@ -1,639 +1,795 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Timetabling App</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Timetable — Multi-College</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --muted:#9aa4b2;
+      --accent:#4f46e5;
+      --accent-2:#10b981;
+      --accent-3:#ef4444;
+      --panel:#0b1320;
+      --glass: rgba(255,255,255,0.03);
+      --slot-border: rgba(255,255,255,0.04);
+      --glass-2: rgba(255,255,255,0.02);
+      --shadow: 0 6px 20px rgba(4,8,20,0.6);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      background: linear-gradient(180deg,#071022 0%, #071827 60%);
+      color:#dbe7f7;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-        }
+    /* Header */
+    .header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 20px;
+      gap:12px;
+      backdrop-filter: blur(6px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      position:sticky;
+      top:0;
+      z-index:30;
+    }
+    .left-actions, .right-actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .btn{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.04);
+      color:var(--muted);
+      padding:9px 12px;
+      border-radius:8px;
+      font-size:13px;
+      cursor:pointer;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+    }
+    .btn.primary{
+      background:linear-gradient(90deg,var(--accent), #7c3aed22);
+      color:white;
+      border: none;
+      box-shadow: 0 6px 18px rgba(79,70,229,0.12);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:600;
+      color:#e6eefc;
+      font-size:16px;
+    }
+    .brand .logo{
+      width:36px; height:36px;
+      border-radius:8px;
+      background: linear-gradient(135deg,#3b82f6,#7c3aed);
+      box-shadow: 0 6px 18px rgba(79,70,229,0.14);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;color:white;
+    }
 
-        .header {
-            background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
-            color: white;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            flex-wrap: wrap;
-            gap: 20px;
-        }
+    /* College area */
+    .college-bar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 20px;
+    }
+    .college-select{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      background:var(--glass);
+      padding:8px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    select{
+      background:transparent;
+      color:var(--muted);
+      border:none;
+      padding:8px;
+      font-size:14px;
+      outline:none;
+    }
+    input[type="text"]{
+      background:transparent;
+      border:1px dashed rgba(255,255,255,0.04);
+      color:var(--muted);
+      padding:8px 10px;
+      border-radius:8px;
+      width:210px;
+      font-size:13px;
+    }
 
-        .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-        }
+    /* Layout */
+    .wrap{
+      max-width:1200px;
+      margin:22px auto;
+      padding:0 20px 40px;
+    }
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+      border-radius:12px;
+      padding:18px;
+      box-shadow: var(--shadow);
+      border:1px solid rgba(255,255,255,0.03);
+    }
 
-        .header-controls {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+    /* Time tabs */
+    .time-tabs{
+      display:flex;
+      gap:8px;
+      padding:10px;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+    }
+    .tab{
+      padding:8px 12px;
+      background:transparent;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.03);
+      cursor:pointer;
+      color:var(--muted);
+      font-weight:600;
+      font-size:13px;
+    }
+    .tab.active{
+      background:linear-gradient(90deg,var(--accent), #7c3aed22);
+      color:white;
+      box-shadow: 0 8px 26px rgba(79,70,229,0.08);
+      border:none;
+    }
 
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+    /* Timetable grid */
+    .grid-wrap{
+      overflow:auto;
+      border-radius:10px;
+      padding:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+      border:1px solid rgba(255,255,255,0.02);
+    }
+    table.timetable{
+      border-collapse:collapse;
+      width:100%;
+      min-width:820px;
+      table-layout: fixed;
+      color:#dbe7f7;
+    }
+    .t-head th{
+      text-align:left;
+      padding:14px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+      border-bottom:1px solid var(--slot-border);
+      font-weight:700;
+      font-size:13px;
+      color:var(--muted);
+      position:relative;
+    }
+    .t-head th .time-label{
+      font-weight:700;
+      color:#eaf0ff;
+      font-size:14px;
+    }
+    tr{
+      border-bottom:1px solid var(--slot-border);
+    }
+    td.tcell{
+      height:92px;
+      vertical-align:top;
+      padding:10px;
+      border-right:1px solid var(--slot-border);
+      position:relative;
+      background:transparent;
+    }
+    td.tcell .cell-inner{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    td.tcell.empty{
+      /* subtle background for empty cells */
+    }
 
-        .btn-primary {
-            background-color: #ffc107;
-            color: #333;
-        }
+    /* Session cards */
+    .session{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:8px 10px;
+      border-radius:8px;
+      color:white;
+      font-weight:600;
+      font-size:13px;
+      cursor:grab;
+      user-select:none;
+      box-shadow: 0 6px 18px rgba(2,6,23,0.5);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    .session:active{ cursor:grabbing; }
+    .session .dot{
+      width:10px;height:10px;border-radius:50%;
+      flex:0 0 auto;
+      box-shadow:0 2px 6px rgba(0,0,0,0.3);
+    }
 
-        .btn-primary:hover {
-            background-color: #ffb300;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-        }
+    /* Drop indicator */
+    .tcell.drop-target{
+      outline: 2px dashed rgba(255,255,255,0.22);
+      outline-offset: -6px;
+      border-radius:8px;
+    }
 
-        .btn-secondary {
-            background-color: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
+    .hint{
+      color:var(--muted);
+      padding:18px;
+      text-align:center;
+      font-size:14px;
+    }
+    .footer-note{
+      margin-top:12px;color:var(--muted);font-size:13px;
+    }
 
-        .btn-secondary:hover {
-            background-color: rgba(255,255,255,0.3);
-        }
+    /* Ghost */
+    .ghost{
+      position:fixed;
+      pointer-events:none;
+      z-index:1000;
+      transform:translate(-50%,-50%);
+      opacity:0.98;
+    }
 
-        .college-selector {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            padding: 20px 40px;
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .college-selector select,
-        .college-selector input {
-            padding: 8px 12px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-            background: white;
-            color: #333;
-        }
-
-        .college-selector select {
-            flex: 1;
-            max-width: 300px;
-        }
-
-        .college-selector input {
-            flex: 1;
-            max-width: 200px;
-        }
-
-        .college-selector button {
-            padding: 8px 16px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .college-selector button:hover {
-            background-color: #218838;
-        }
-
-        .nav-tabs {
-            display: flex;
-            gap: 20px;
-            padding: 20px 40px;
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-            overflow-x: auto;
-        }
-
-        .nav-tab {
-            padding: 8px 16px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: #666;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .nav-tab.active {
-            color: #0066cc;
-            border-bottom-color: #0066cc;
-        }
-
-        .nav-tab:hover {
-            color: #0066cc;
-        }
-
-        .container {
-            padding: 20px 40px;
-        }
-
-        .timetable-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .timetable {
-            background: white;
-            border-collapse: collapse;
-            width: 100%;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .timetable th {
-            background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
-            color: white;
-            padding: 16px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .timetable td {
-            border: 1px solid #e0e0e0;
-            padding: 0;
-            height: 60px;
-            position: relative;
-            vertical-align: top;
-        }
-
-        .time-slot {
-            min-height: 60px;
-            padding: 4px;
-            display: flex;
-            flex-wrap: wrap;
-            align-content: flex-start;
-            gap: 4px;
-            position: relative;
-        }
-
-        .time-label {
-            background: #f9f9f9;
-            padding: 16px;
-            font-weight: 600;
-            font-size: 12px;
-            text-align: center;
-            min-width: 60px;
-            border-right: 1px solid #e0e0e0;
-        }
-
-        .session-block {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 500;
-            cursor: grab;
-            user-select: none;
-            flex: 1;
-            min-width: 120px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .session-block:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-
-        .session-block:active {
-            cursor: grabbing;
-        }
-
-        body.dragging .day-column:hover,
-        body.dragging .time-slot:hover {
-            background-color: transparent !important;
-            box-shadow: none !important;
-        }
-
-        body.dragging .day-column {
-            border-color: #d1d5db !important;
-        }
-
-        .drop-indicator {
-            position: fixed;
-            border: 2px dashed #3b82f6;
-            background-color: rgba(59, 130, 246, 0.05);
-            pointer-events: none;
-            z-index: 9999;
-            border-radius: 4px;
-            display: none;
-        }
-
-        .drag-clone {
-            position: fixed;
-            pointer-events: none;
-            z-index: 10000;
-            opacity: 0.8;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .day-column {
-            transition: background-color 0.15s ease;
-        }
-
-        body.dragging .time-slot {
-            background-color: transparent !important;
-            cursor: grabbing;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-    </style>
+    /* small responsive tweaks */
+    @media (max-width:880px){
+      .wrap{ padding:0 12px; }
+      input[type="text"]{ width:140px; }
+      table.timetable{ min-width:720px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🎓 Interactive Timetabling App</h1>
-        <div class="header-controls">
-            <button class="btn btn-primary">📋 Open Menu</button>
-            <button class="btn btn-secondary">📚 Semester ▼</button>
-            <button class="btn btn-secondary">👁️ View ▼</button>
-            <button class="btn btn-secondary">📥 Download PDF</button>
-        </div>
+  <header class="header">
+    <div class="left-actions">
+      <div class="brand">
+        <div class="logo">T</div>
+        Timetable
+      </div>
+      <button class="btn" id="open-menu-btn">Open Menu ▾</button>
+      <button class="btn" id="semester-btn">Semester ▾</button>
+      <button class="btn" id="view-btn">View ▾</button>
     </div>
 
-    <div class="college-selector">
-        <select id="collegeSelect" onchange="switchCollege()">
-            <option value="">Select College...</option>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="college-select">
+        <label style="font-size:12px;color:var(--muted);margin-right:8px;">College</label>
+        <select id="collegeSelect" aria-label="Select college">
+          <option value="">-- No colleges --</option>
         </select>
-        <input type="text" id="newCollegeName" placeholder="New college name">
-        <button onclick="addCollege()">+ Add College</button>
+        <input type="text" id="collegeName" placeholder="Add college..." />
+        <button class="btn primary" id="addCollegeBtn">+ Add</button>
+      </div>
     </div>
 
-    <div class="nav-tabs" id="navTabs"></div>
-
-    <div class="container">
-        <h2 class="timetable-title" id="timetableTitle">Select a college to view timetable</h2>
-        <div id="timetableContainer"></div>
+    <div class="right-actions">
+      <button class="btn" id="downloadBtn">Download PDF</button>
     </div>
+  </header>
 
-    <script>
-        let colleges = {};
-        let currentCollege = null;
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  <main class="wrap">
+    <section class="panel">
+      <div class="time-tabs" id="timeTabs" aria-hidden="false">
+        <!-- tabs will be populated -->
+      </div>
 
-        function initializeSampleData() {
-            colleges = {
-                'moss-vale': {
-                    name: 'Moss Vale',
-                    timetable: {
-                        '8:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '9:00': {
-                            'Monday': ['11224NAT - Maths PFS', 'FSK20119 - Barista Espresso CII SWVP'],
-                            'Tuesday': ['11225NAT - English B TPC', '11224NAT - Biology PFS'],
-                            'Wednesday': ['11224NAT - MS365'],
-                            'Thursday': ['FSK20119 - Writing for Work CII'],
-                            'Friday': ['11224NAT - English A PFS']
-                        },
-                        '11:00': {
-                            'Monday': ['CSO - Maths/Science Support'],
-                            'Tuesday': ['FSK20119 - Reading for Work CII SWVP'],
-                            'Wednesday': ['11225NAT - Health TPC'],
-                            'Thursday': ['CSO - Computing Support', '11225NAT - Health TPC'],
-                            'Friday': ['FSK20119 - Workplace Communication CII SWVP']
-                        },
-                        '13:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '14:00': {
-                            'Monday': ['11225NAT - Maths B TPC'],
-                            'Tuesday': ['FSK20119 - Digital Literacy CII SWVP'],
-                            'Wednesday': ['11224NAT - Dig Lit Units PFS'],
-                            'Thursday': ['FSK20119 - Digital Literacy CII SWVP'],
-                            'Friday': []
-                        },
-                        '16:00': {
-                            'Monday': [],
-                            'Tuesday': ['CSO - Maths/Science Support'],
-                            'Wednesday': [],
-                            'Thursday': ['CSO - English Support'],
-                            'Friday': []
-                        }
-                    }
-                },
-                'goulburn': {
-                    name: 'Goulburn',
-                    timetable: {
-                        '8:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '9:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '11:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '13:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '14:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '16:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
-                    }
-                },
-                'queanbeyan': {
-                    name: 'Queanbeyan',
-                    timetable: {
-                        '8:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '9:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '11:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '13:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '14:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                        '16:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
-                    }
-                }
-            };
-            updateCollegeSelector();
+      <div class="grid-wrap panel" style="margin-top:6px;">
+        <div id="noCollegeMessage" class="hint" style="display:block;">
+          No college selected. Add a college to begin.
+          <div class="footer-note">Double-click any cell to add a session. Drag sessions between cells.</div>
+        </div>
+
+        <div id="timetableArea" style="display:none;">
+          <div style="overflow:auto;">
+            <table class="timetable" id="timetable">
+              <thead class="t-head">
+                <tr id="headRow">
+                  <th style="width:120px;">Day / Time</th>
+                  <!-- time headers injected -->
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+                <!-- rows injected -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      // Config
+      const TIMES = ["08:00","09:00","11:00","13:00","14:00","16:00"];
+      const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday"];
+
+      // Data: colleges stored in localStorage under key 'timetable_colleges'
+      let colleges = loadColleges();
+      let activeCollegeId = null;
+      let activeTime = null; // used by tabs
+
+      // DOM
+      const collegeSelect = document.getElementById('collegeSelect');
+      const addCollegeBtn = document.getElementById('addCollegeBtn');
+      const collegeNameInput = document.getElementById('collegeName');
+      const noCollegeMessage = document.getElementById('noCollegeMessage');
+      const timetableArea = document.getElementById('timetableArea');
+      const timetable = document.getElementById('timetable');
+      const headRow = document.getElementById('headRow');
+      const tableBody = document.getElementById('tableBody');
+      const timeTabs = document.getElementById('timeTabs');
+      const downloadBtn = document.getElementById('downloadBtn');
+
+      // Drag state
+      let dragging = null; // {elem, data, originCellKey}
+      let ghost = null;
+      let currentDropCell = null;
+
+      // Initialization
+      buildTimeTabs();
+      buildTableSkeleton();
+      refreshCollegeSelect();
+
+      // Event listeners
+      addCollegeBtn.addEventListener('click', (e)=> {
+        const name = collegeNameInput.value.trim();
+        if(!name) return alert('Enter a college name.');
+        createCollege(name);
+        collegeNameInput.value = '';
+      });
+
+      collegeSelect.addEventListener('change', (e)=>{
+        const id = collegeSelect.value;
+        if(!id){
+          activeCollegeId = null;
+          renderNoCollege();
+        } else {
+          activeCollegeId = id;
+          renderCollege();
         }
+      });
 
-        function updateCollegeSelector() {
-            const select = document.getElementById('collegeSelect');
-            select.innerHTML = '<option value="">Select College...</option>';
-            Object.keys(colleges).forEach(key => {
-                const option = document.createElement('option');
-                option.value = key;
-                option.textContent = colleges[key].name;
-                select.appendChild(option);
-            });
-        }
+      downloadBtn.addEventListener('click', (e)=>{
+        // Simple: print; user can save as PDF
+        window.print();
+      });
 
-        function updateNavTabs() {
-            const navTabs = document.getElementById('navTabs');
-            navTabs.innerHTML = '';
-            
-            if (!currentCollege) return;
-            
-            const college = colleges[currentCollege];
-            const timetable = college.timetable;
-            const times = Object.keys(timetable).sort();
-            
-            times.forEach((time, index) => {
-                const tab = document.createElement('button');
-                tab.className = 'nav-tab' + (index === 0 ? ' active' : '');
-                tab.textContent = time;
-                tab.onclick = () => {
-                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                };
-                navTabs.appendChild(tab);
-            });
-        }
+      // Small menus placeholders
+      document.getElementById('open-menu-btn').addEventListener('click', ()=> alert('Menu placeholder'));
+      document.getElementById('semester-btn').addEventListener('click', ()=> alert('Semester placeholder'));
+      document.getElementById('view-btn').addEventListener('click', ()=> alert('View placeholder'));
 
-        function addCollege() {
-            const name = document.getElementById('newCollegeName').value.trim();
-            if (!name) {
-                alert('Please enter a college name');
-                return;
-            }
-
-            const key = name.toLowerCase().replace(/\s+/g, '-');
-            if (colleges[key]) {
-                alert('College already exists');
-                return;
-            }
-
-            colleges[key] = {
-                name: name,
-                timetable: {
-                    '8:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                    '9:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                    '11:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                    '13:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                    '14:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                    '16:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
-                }
-            };
-
-            document.getElementById('newCollegeName').value = '';
-            updateCollegeSelector();
-            switchCollege(key);
-        }
-
-        function switchCollege(collegeKey = null) {
-            const select = document.getElementById('collegeSelect');
-            const key = collegeKey || select.value;
-
-            if (!key || !colleges[key]) {
-                document.getElementById('timetableContainer').innerHTML = '<div class="empty-state">Please select a college</div>';
-                document.getElementById('timetableTitle').textContent = 'Select a college to view timetable';
-                document.getElementById('navTabs').innerHTML = '';
-                return;
-            }
-
-            currentCollege = key;
-            select.value = key;
-            renderTimetable();
-            updateNavTabs();
-        }
-
-        function renderTimetable() {
-            if (!currentCollege) return;
-
-            const college = colleges[currentCollege];
-            const timetable = college.timetable;
-            const times = Object.keys(timetable).sort();
-
-            document.getElementById('timetableTitle').textContent = `${college.name} Timetable - Semester 1 2026`;
-
-            let html = '<table class="timetable"><thead><tr><th style="width: 80px;">Time</th>';
-            days.forEach(day => {
-                html += `<th class="day-column">${day}</th>`;
-            });
-            html += '</tr></thead><tbody>';
-
-            times.forEach(time => {
-                html += `<tr><td class="time-label">${time}</td>`;
-                days.forEach(day => {
-                    const sessions = timetable[time][day] || [];
-                    html += '<td class="day-column"><div class="time-slot">';
-                    sessions.forEach(session => {
-                        html += `<div class="session-block">${session}</div>`;
-                    });
-                    html += '</div></td>';
-                });
-                html += '</tr>';
-            });
-
-            html += '</tbody></table>';
-            document.getElementById('timetableContainer').innerHTML = html;
-
-            initializeDragAndDrop();
-        }
-
-        function initializeDragAndDrop() {
-            const container = document.querySelector('.timetable');
-            if (!container) return;
-
-            makeDraggable({
-                container: container,
-                sessionSelector: '.session-block',
-                cellSelector: '.time-slot',
-                onDrop: (sessionEl, targetCell) => {
-                    targetCell.insertBefore(sessionEl, targetCell.children[0] || null);
-                }
-            });
-        }
-
-        function makeDraggable(config) {
-            const {
-                container,
-                sessionSelector = '.session-block',
-                cellSelector = '.time-slot',
-                onDrop = () => {}
-            } = config;
-
-            const styleId = 'drag-override-styles';
-            if (!document.getElementById(styleId)) {
-                const style = document.createElement('style');
-                style.id = styleId;
-                style.textContent = `
-                    body.dragging .day-column:hover,
-                    body.dragging .time-slot:hover {
-                        background-color: transparent !important;
-                        box-shadow: none !important;
-                    }
-                    body.dragging .day-column {
-                        border-color: #d1d5db !important;
-                    }
-                    .drop-indicator {
-                        position: fixed;
-                        border: 2px dashed #3b82f6;
-                        background-color: rgba(59, 130, 246, 0.05);
-                        pointer-events: none;
-                        z-index: 9999;
-                        border-radius: 4px;
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-
-            const dropIndicator = document.createElement('div');
-            dropIndicator.className = 'drop-indicator';
-            dropIndicator.style.display = 'none';
-            document.body.appendChild(dropIndicator);
-
-            const sessions = container.querySelectorAll(sessionSelector);
-            sessions.forEach(session => {
-                session.addEventListener('mousedown', handleDragStart);
-            });
-
-            function handleDragStart(e) {
-                if (e.button !== 0) return;
-                e.preventDefault();
-                e.stopPropagation();
-
-                const sessionEl = e.currentTarget;
-                let isDragging = false;
-                let clone = null;
-                let startX = e.clientX;
-                let startY = e.clientY;
-
-                function handleMouseMove(e) {
-                    if (!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) {
-                        isDragging = true;
-                        document.body.classList.add('dragging');
-
-                        clone = sessionEl.cloneNode(true);
-                        clone.classList.add('drag-clone');
-                        Object.assign(clone.style, {
-                            position: 'fixed',
-                            zIndex: '10000',
-                            opacity: '0.8',
-                            pointerEvents: 'none',
-                            boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
-                        });
-                        document.body.appendChild(clone);
-                        sessionEl.style.visibility = 'hidden';
-                    }
-
-                    if (isDragging) {
-                        const rect = sessionEl.getBoundingClientRect();
-                        const offsetX = startX - rect.left;
-                        const offsetY = startY - rect.top;
-                        clone.style.left = `${e.clientX - offsetX}px`;
-                        clone.style.top = `${e.clientY - offsetY}px`;
-
-                        dropIndicator.style.display = 'none';
-                        const elements = document.elementsFromPoint(e.clientX, e.clientY);
-                        let targetCell = null;
-
-                        for (let el of elements) {
-                            if (el.matches(cellSelector) && el.closest('.day-column')) {
-                                targetCell = el;
-                                break;
-                            }
-                        }
-
-                        if (targetCell) {
-                            const rect = targetCell.getBoundingClientRect();
-                            Object.assign(dropIndicator.style, {
-                                display: 'block',
-                                left: `${rect.left}px`,
-                                top: `${rect.top}px`,
-                                width: `${rect.width}px`,
-                                height: `${rect.height}px`
-                            });
-                        }
-                    }
-                }
-
-                function handleMouseUp(e) {
-                    document.removeEventListener('mousemove', handleMouseMove);
-                    document.removeEventListener('mouseup', handleMouseUp);
-                    document.body.classList.remove('dragging');
-                    dropIndicator.style.display = 'none';
-
-                    if (isDragging && clone) {
-                        clone.remove();
-                        sessionEl.style.visibility = 'visible';
-
-                        const elements = document.elementsFromPoint(e.clientX, e.clientY);
-                        let targetCell = null;
-
-                        for (let el of elements) {
-                            if (el.matches(cellSelector) && el.closest('.day-column')) {
-                                targetCell = el;
-                                break;
-                            }
-                        }
-
-                        if (targetCell) {
-                            onDrop(sessionEl, targetCell, 0);
-                        }
-                    } else {
-                        sessionEl.style.visibility = 'visible';
-                    }
-                }
-
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', handleMouseUp);
-            }
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            initializeSampleData();
+      // Build tabs
+      function buildTimeTabs(){
+        timeTabs.innerHTML = '';
+        TIMES.forEach(t=>{
+          const btn = document.createElement('button');
+          btn.className = 'tab';
+          btn.textContent = t;
+          btn.dataset.time = t;
+          btn.addEventListener('click', ()=>{
+            document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+            btn.classList.add('active');
+            activeTime = t;
+            highlightTimeColumn(t);
+          });
+          timeTabs.appendChild(btn);
         });
-    </script>
+      }
+
+      // Highlight a time column (visual only)
+      function highlightTimeColumn(time){
+        // remove previous
+        document.querySelectorAll('.t-head th').forEach(th=>{
+          th.style.boxShadow = '';
+          th.style.background = '';
+        });
+        const headers = Array.from(document.querySelectorAll('.t-head th'));
+        const idx = TIMES.indexOf(time);
+        if(idx >= 0){
+          const th = headers[idx+1]; // +1 because first is day column
+          if(th){
+            th.style.background = 'linear-gradient(90deg, rgba(79,70,229,0.12), rgba(16,185,129,0.04))';
+            th.style.boxShadow = 'inset 0 -6px 20px rgba(79,70,229,0.04)';
+          }
+        }
+      }
+
+      // Build table skeleton of days x times
+      function buildTableSkeleton(){
+        // header times
+        headRow.innerHTML = '';
+        const first = document.createElement('th');
+        first.textContent = 'Day / Time';
+        first.style.width = '120px';
+        headRow.appendChild(first);
+
+        TIMES.forEach(t=>{
+          const th = document.createElement('th');
+          th.innerHTML = '<div class="time-label">' + t + '</div>';
+          headRow.appendChild(th);
+        });
+
+        // body rows
+        tableBody.innerHTML = '';
+        DAYS.forEach(d=>{
+          const tr = document.createElement('tr');
+          const dayTh = document.createElement('th');
+          dayTh.textContent = d;
+          dayTh.style.fontWeight = '700';
+          dayTh.style.fontSize = '13px';
+          dayTh.style.color = 'var(--muted)';
+          dayTh.style.padding = '14px';
+          tr.appendChild(dayTh);
+
+          TIMES.forEach(t=>{
+            const td = document.createElement('td');
+            td.className = 'tcell empty';
+            const key = cellKey(d,t);
+            td.dataset.key = key;
+            td.addEventListener('dblclick', cellDoubleClick);
+            // For accessibility allow keyboard creation (Enter)
+            td.tabIndex = 0;
+            td.addEventListener('keydown', (ev)=>{
+              if(ev.key === 'Enter'){
+                cellDoubleClick.call(td, ev);
+              }
+            });
+            const inner = document.createElement('div');
+            inner.className = 'cell-inner';
+            td.appendChild(inner);
+            tr.appendChild(td);
+          });
+
+          tableBody.appendChild(tr);
+        });
+      }
+
+      function cellKey(day, time){
+        return day + '|' + time;
+      }
+
+      // Colleges storage utilities
+      function loadColleges(){
+        try{
+          const raw = localStorage.getItem('timetable_colleges');
+          return raw ? JSON.parse(raw) : {};
+        } catch(e){
+          return {};
+        }
+      }
+      function saveColleges(){
+        localStorage.setItem('timetable_colleges', JSON.stringify(colleges));
+      }
+
+      function createCollege(name){
+        const id = 'c_' + Date.now();
+        colleges[id] = {
+          id,
+          name,
+          sessions: {} // map cellKey -> array of sessions
+        };
+        saveColleges();
+        refreshCollegeSelect();
+        collegeSelect.value = id;
+        activeCollegeId = id;
+        renderCollege();
+      }
+
+      function refreshCollegeSelect(){
+        // Clear and re-add default
+        const prev = collegeSelect.value;
+        collegeSelect.innerHTML = '';
+        const optDefault = document.createElement('option');
+        optDefault.value = '';
+        optDefault.textContent = '-- No colleges --';
+        collegeSelect.appendChild(optDefault);
+
+        Object.values(colleges).forEach(c=>{
+          const o = document.createElement('option');
+          o.value = c.id;
+          o.textContent = c.name;
+          collegeSelect.appendChild(o);
+        });
+
+        // If previous value still exists keep it
+        if(prev && colleges[prev]) collegeSelect.value = prev;
+      }
+
+      function renderNoCollege(){
+        noCollegeMessage.style.display = 'block';
+        timetableArea.style.display = 'none';
+      }
+
+      function renderCollege(){
+        if(!activeCollegeId || !colleges[activeCollegeId]){
+          renderNoCollege();
+          return;
+        }
+        noCollegeMessage.style.display = 'none';
+        timetableArea.style.display = 'block';
+        // Clear cells
+        document.querySelectorAll('.tcell .cell-inner').forEach(inner => inner.innerHTML = '');
+        // Populate sessions from data
+        const col = colleges[activeCollegeId];
+        for(const key in col.sessions){
+          const arr = col.sessions[key];
+          arr.forEach(s => {
+            const cell = document.querySelector('.tcell[data-key="'+escapeSelector(key)+'"] .cell-inner');
+            if(cell) cell.appendChild(renderSessionElement(s));
+          });
+        }
+      }
+
+      function escapeSelector(s){
+        return s.replace(/"/g,'\\"').replace(/'/g,"\\'");
+      }
+
+      // Create session element DOM
+      function renderSessionElement(session){
+        const el = document.createElement('div');
+        el.className = 'session';
+        el.dataset.id = session.id;
+        el.dataset.title = session.title;
+        el.style.background = session.color || 'linear-gradient(90deg, #4f46e5, #7c3aed)';
+        el.style.borderColor = 'rgba(255,255,255,0.04)';
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        dot.style.background = session.color ? session.color : '#3b82f6';
+        dot.style.minWidth = '10px';
+        dot.style.minHeight = '10px';
+        el.appendChild(dot);
+        const span = document.createElement('span');
+        span.textContent = session.title;
+        el.appendChild(span);
+
+        // Attach pointer-based drag handlers
+        el.addEventListener('pointerdown', sessionPointerDown);
+        // Prevent default dragging
+        el.addEventListener('dragstart', e => e.preventDefault());
+
+        return el;
+      }
+
+      // Double-click to create session
+      function cellDoubleClick(e){
+        // cell is this element or event target
+        const td = e.currentTarget || this;
+        if(!activeCollegeId){
+          alert('Please add and select a college first.');
+          return;
+        }
+        const title = prompt('Session title:','New Session');
+        if(!title) return;
+        const color = prompt('Session color (hex or css color) or leave blank for default:','#4f46e5') || '#4f46e5';
+        const session = {
+          id: 's_' + Date.now(),
+          title: title,
+          color: color
+        };
+        // save in data
+        const key = td.dataset.key;
+        const col = colleges[activeCollegeId];
+        if(!col.sessions[key]) col.sessions[key] = [];
+        col.sessions[key].push(session);
+        saveColleges();
+        // add to DOM
+        const inner = td.querySelector('.cell-inner');
+        inner.appendChild(renderSessionElement(session));
+      }
+
+      // Session dragging implementation (pointerevents)
+      function sessionPointerDown(ev){
+        ev.preventDefault();
+        const target = ev.currentTarget;
+        // Record dragging info
+        const sessionId = target.dataset.id;
+        const title = target.dataset.title || '';
+        // Find origin cell
+        let originCell = target.closest('.tcell');
+        const originKey = originCell ? originCell.dataset.key : null;
+
+        dragging = {
+          elem: target,
+          sessionId,
+          title,
+          originKey
+        };
+
+        // create ghost clone
+        ghost = target.cloneNode(true);
+        ghost.classList.add('ghost');
+        ghost.style.width = target.offsetWidth + 'px';
+        ghost.style.height = target.offsetHeight + 'px';
+        document.body.appendChild(ghost);
+
+        // capture pointer to track even if pointer leaves element
+        target.setPointerCapture(ev.pointerId);
+
+        // initial position
+        moveGhost(ev.pageX, ev.pageY);
+
+        // listeners
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+
+        // subtle hide original while dragging
+        target.style.opacity = '0.16';
+        target.style.transform = 'scale(0.98)';
+      }
+
+      function moveGhost(pageX, pageY){
+        if(!ghost) return;
+        ghost.style.left = pageX + 'px';
+        ghost.style.top = pageY + 'px';
+      }
+
+      function onPointerMove(ev){
+        moveGhost(ev.pageX, ev.pageY);
+        // detect cell under pointer using elementFromPoint
+        const el = document.elementFromPoint(ev.clientX, ev.clientY);
+        const cell = el ? el.closest('.tcell') : null;
+
+        if(cell && cell !== currentDropCell){
+          // remove previous marker
+          if(currentDropCell) currentDropCell.classList.remove('drop-target');
+          currentDropCell = cell;
+          currentDropCell.classList.add('drop-target');
+        } else if(!cell && currentDropCell){
+          currentDropCell.classList.remove('drop-target');
+          currentDropCell = null;
+        }
+      }
+
+      function onPointerUp(ev){
+        // finalize drop
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+
+        if(ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+        if(dragging && dragging.elem) {
+          dragging.elem.style.opacity = '';
+          dragging.elem.style.transform = '';
+        }
+
+        if(currentDropCell){
+          // Move session into that cell (update data and DOM)
+          const destKey = currentDropCell.dataset.key;
+          if(dragging && dragging.originKey){
+            const col = colleges[activeCollegeId];
+            if(col){
+              // find and remove from origin
+              const originArr = col.sessions[dragging.originKey] || [];
+              const idx = originArr.findIndex(s => s.id === dragging.sessionId);
+              let sessionObj = null;
+              if(idx >= 0){
+                sessionObj = originArr.splice(idx,1)[0];
+                if(originArr.length === 0) delete col.sessions[dragging.originKey];
+              } else {
+                // if not found (shouldn't happen) create a lightweight object
+                sessionObj = {id:dragging.sessionId, title:dragging.title, color:dragging.elem.style.background};
+              }
+              // add to dest
+              if(!col.sessions[destKey]) col.sessions[destKey] = [];
+              col.sessions[destKey].push(sessionObj);
+              saveColleges();
+            }
+          }
+
+          // move element in DOM
+          const inner = currentDropCell.querySelector('.cell-inner');
+          if(inner && dragging && dragging.elem){
+            inner.appendChild(dragging.elem);
+          }
+        }
+
+        // cleanup
+        if(currentDropCell) currentDropCell.classList.remove('drop-target');
+        currentDropCell = null;
+        dragging = null;
+        ghost = null;
+      }
+
+      // ensure if user reloads with a selected college, render it
+      if(Object.keys(colleges).length === 0){
+        renderNoCollege();
+      } else {
+        // if there's at least one college, preselect first
+        const firstId = Object.keys(colleges)[0];
+        collegeSelect.value = firstId;
+        activeCollegeId = firstId;
+        renderCollege();
+      }
+
+      // Helper to create a sample session (not used initially; for testing)
+      function _createSampleSessionFor(colId, day, time, title, color){
+        const s = { id: 's_'+Date.now()+Math.random().toString(36).slice(2,7), title:title, color:color };
+        const key = cellKey(day,time);
+        if(!colleges[colId].sessions[key]) colleges[colId].sessions[key] = [];
+        colleges[colId].sessions[key].push(s);
+        saveColleges();
+      }
+
+      // keyboard accessibility: allow delete via context menu or double-click
+      // Add context menu to sessions for deletion/edit
+      document.addEventListener('contextmenu', function(e){
+        const ses = e.target.closest('.session');
+        if(ses){
+          e.preventDefault();
+          const id = ses.dataset.id;
+          const action = prompt('Enter "delete" to remove, or new title to rename:', 'delete');
+          if(!action) return;
+          if(action.toLowerCase() === 'delete'){
+            // remove from data and DOM
+            if(!activeCollegeId) return;
+            const col = colleges[activeCollegeId];
+            for(const key in col.sessions){
+              const arr = col.sessions[key];
+              const idx = arr.findIndex(s => s.id === id);
+              if(idx >= 0){
+                arr.splice(idx,1);
+                if(arr.length === 0) delete col.sessions[key];
+                saveColleges();
+                ses.remove();
+                break;
+              }
+            }
+          } else {
+            // rename
+            const newTitle = action;
+            ses.querySelector('span:last-child').textContent = newTitle;
+            // update data
+            if(!activeCollegeId) return;
+            const col = colleges[activeCollegeId];
+            for(const key in col.sessions){
+              const arr = col.sessions[key];
+              const s = arr.find(s => s.id === id);
+              if(s){ s.title = newTitle; saveColleges(); break; }
+            }
+          }
+        }
+      });
+
+      // Make headers and table accessible to keyboard users: allow selecting a time tab by number keys 1-6
+      window.addEventListener('keydown', (e)=>{
+        if(['1','2','3','4','5','6'].includes(e.key)){
+          const idx = parseInt(e.key,10)-1;
+          if(TIMES[idx]){
+            document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+            const tab = document.querySelector('.tab[data-time="'+TIMES[idx]+'"]');
+            if(tab) tab.classList.add('active');
+            activeTime = TIMES[idx];
+            highlightTimeColumn(activeTime);
+          }
+        }
+      });
+
+      // End of IIFE
+    })();
+  </script>
 </body>
 </html>
