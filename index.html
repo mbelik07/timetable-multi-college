@@ -25,6 +25,8 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+            gap: 20px;
         }
 
         .header h1 {
@@ -36,6 +38,7 @@
             display: flex;
             gap: 12px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -73,9 +76,14 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
+            padding: 20px 40px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
         }
 
-        .college-selector select {
+        .college-selector select,
+        .college-selector input {
             padding: 8px 12px;
             border-radius: 4px;
             border: 1px solid #ddd;
@@ -84,11 +92,14 @@
             color: #333;
         }
 
+        .college-selector select {
+            flex: 1;
+            max-width: 300px;
+        }
+
         .college-selector input {
-            padding: 8px 12px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            font-size: 14px;
+            flex: 1;
+            max-width: 200px;
         }
 
         .college-selector button {
@@ -218,7 +229,6 @@
             cursor: grabbing;
         }
 
-        /* Drag and Drop Styles */
         body.dragging .day-column:hover,
         body.dragging .time-slot:hover {
             background-color: transparent !important;
@@ -261,34 +271,25 @@
             padding: 40px;
             color: #999;
         }
-
-        @media (max-width: 1200px) {
-            .header {
-                flex-direction: column;
-                gap: 16px;
-            }
-
-            .header-controls {
-                width: 100%;
-                justify-content: center;
-                flex-wrap: wrap;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🎓 Interactive Timetabling App</h1>
         <div class="header-controls">
-            <div class="college-selector">
-                <select id="collegeSelect" onchange="switchCollege()">
-                    <option value="">Select College...</option>
-                </select>
-                <input type="text" id="newCollegeName" placeholder="New college name">
-                <button onclick="addCollege()">+ Add College</button>
-            </div>
+            <button class="btn btn-primary">📋 Open Menu</button>
+            <button class="btn btn-secondary">📚 Semester ▼</button>
+            <button class="btn btn-secondary">👁️ View ▼</button>
             <button class="btn btn-secondary">📥 Download PDF</button>
         </div>
+    </div>
+
+    <div class="college-selector">
+        <select id="collegeSelect" onchange="switchCollege()">
+            <option value="">Select College...</option>
+        </select>
+        <input type="text" id="newCollegeName" placeholder="New college name">
+        <button onclick="addCollege()">+ Add College</button>
     </div>
 
     <div class="nav-tabs" id="navTabs"></div>
@@ -299,16 +300,16 @@
     </div>
 
     <script>
-        // Data structure for colleges and timetables
         let colleges = {};
         let currentCollege = null;
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-        // Initialize with sample data
         function initializeSampleData() {
             colleges = {
                 'moss-vale': {
                     name: 'Moss Vale',
                     timetable: {
+                        '8:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
                         '9:00': {
                             'Monday': ['11224NAT - Maths PFS', 'FSK20119 - Barista Espresso CII SWVP'],
                             'Tuesday': ['11225NAT - English B TPC', '11224NAT - Biology PFS'],
@@ -323,11 +324,19 @@
                             'Thursday': ['CSO - Computing Support', '11225NAT - Health TPC'],
                             'Friday': ['FSK20119 - Workplace Communication CII SWVP']
                         },
+                        '13:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
                         '14:00': {
                             'Monday': ['11225NAT - Maths B TPC'],
                             'Tuesday': ['FSK20119 - Digital Literacy CII SWVP'],
                             'Wednesday': ['11224NAT - Dig Lit Units PFS'],
                             'Thursday': ['FSK20119 - Digital Literacy CII SWVP'],
+                            'Friday': []
+                        },
+                        '16:00': {
+                            'Monday': [],
+                            'Tuesday': ['CSO - Maths/Science Support'],
+                            'Wednesday': [],
+                            'Thursday': ['CSO - English Support'],
                             'Friday': []
                         }
                     }
@@ -335,27 +344,23 @@
                 'goulburn': {
                     name: 'Goulburn',
                     timetable: {
-                        '9:00': {
-                            'Monday': [],
-                            'Tuesday': [],
-                            'Wednesday': [],
-                            'Thursday': [],
-                            'Friday': []
-                        },
-                        '11:00': {
-                            'Monday': [],
-                            'Tuesday': [],
-                            'Wednesday': [],
-                            'Thursday': [],
-                            'Friday': []
-                        },
-                        '14:00': {
-                            'Monday': [],
-                            'Tuesday': [],
-                            'Wednesday': [],
-                            'Thursday': [],
-                            'Friday': []
-                        }
+                        '8:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                        '9:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                        '11:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                        '13:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                        '14:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                        '16:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
+                    }
+                },
+                'queanbeyan': {
+                    name: 'Queanbeyan',
+                    timetable: {
+                        '8:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                        '9:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                        '11:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                        '13:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                        '14:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                        '16:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
                     }
                 }
             };
@@ -370,6 +375,28 @@
                 option.value = key;
                 option.textContent = colleges[key].name;
                 select.appendChild(option);
+            });
+        }
+
+        function updateNavTabs() {
+            const navTabs = document.getElementById('navTabs');
+            navTabs.innerHTML = '';
+            
+            if (!currentCollege) return;
+            
+            const college = colleges[currentCollege];
+            const timetable = college.timetable;
+            const times = Object.keys(timetable).sort();
+            
+            times.forEach((time, index) => {
+                const tab = document.createElement('button');
+                tab.className = 'nav-tab' + (index === 0 ? ' active' : '');
+                tab.textContent = time;
+                tab.onclick = () => {
+                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                };
+                navTabs.appendChild(tab);
             });
         }
 
@@ -389,9 +416,12 @@
             colleges[key] = {
                 name: name,
                 timetable: {
+                    '8:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
                     '9:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
                     '11:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
-                    '14:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
+                    '13:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                    '14:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                    '16:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
                 }
             };
 
@@ -407,11 +437,14 @@
             if (!key || !colleges[key]) {
                 document.getElementById('timetableContainer').innerHTML = '<div class="empty-state">Please select a college</div>';
                 document.getElementById('timetableTitle').textContent = 'Select a college to view timetable';
+                document.getElementById('navTabs').innerHTML = '';
                 return;
             }
 
             currentCollege = key;
+            select.value = key;
             renderTimetable();
+            updateNavTabs();
         }
 
         function renderTimetable() {
@@ -419,7 +452,6 @@
 
             const college = colleges[currentCollege];
             const timetable = college.timetable;
-            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
             const times = Object.keys(timetable).sort();
 
             document.getElementById('timetableTitle').textContent = `${college.name} Timetable - Semester 1 2026`;
@@ -446,7 +478,6 @@
             html += '</tbody></table>';
             document.getElementById('timetableContainer').innerHTML = html;
 
-            // Initialize drag and drop
             initializeDragAndDrop();
         }
 
@@ -464,9 +495,6 @@
             });
         }
 
-        /**
-         * Improved makeDraggable function with cell-level drop indicators
-         */
         function makeDraggable(config) {
             const {
                 container,
@@ -603,7 +631,6 @@
             }
         }
 
-        // Initialize on page load
         window.addEventListener('DOMContentLoaded', () => {
             initializeSampleData();
         });
