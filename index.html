@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Timetabling App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .btn-primary:hover {
+            background-color: #ffb300;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+
+        .college-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .college-selector select {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            background: white;
+            color: #333;
+        }
+
+        .college-selector input {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        .college-selector button {
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .college-selector button:hover {
+            background-color: #218838;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 20px;
+            padding: 20px 40px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-tab.active {
+            color: #0066cc;
+            border-bottom-color: #0066cc;
+        }
+
+        .nav-tab:hover {
+            color: #0066cc;
+        }
+
+        .container {
+            padding: 20px 40px;
+        }
+
+        .timetable-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .timetable {
+            background: white;
+            border-collapse: collapse;
+            width: 100%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .timetable th {
+            background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .timetable td {
+            border: 1px solid #e0e0e0;
+            padding: 0;
+            height: 60px;
+            position: relative;
+            vertical-align: top;
+        }
+
+        .time-slot {
+            min-height: 60px;
+            padding: 4px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 4px;
+            position: relative;
+        }
+
+        .time-label {
+            background: #f9f9f9;
+            padding: 16px;
+            font-weight: 600;
+            font-size: 12px;
+            text-align: center;
+            min-width: 60px;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .session-block {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: grab;
+            user-select: none;
+            flex: 1;
+            min-width: 120px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .session-block:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .session-block:active {
+            cursor: grabbing;
+        }
+
+        /* Drag and Drop Styles */
+        body.dragging .day-column:hover,
+        body.dragging .time-slot:hover {
+            background-color: transparent !important;
+            box-shadow: none !important;
+        }
+
+        body.dragging .day-column {
+            border-color: #d1d5db !important;
+        }
+
+        .drop-indicator {
+            position: fixed;
+            border: 2px dashed #3b82f6;
+            background-color: rgba(59, 130, 246, 0.05);
+            pointer-events: none;
+            z-index: 9999;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .drag-clone {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            opacity: 0.8;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .day-column {
+            transition: background-color 0.15s ease;
+        }
+
+        body.dragging .time-slot {
+            background-color: transparent !important;
+            cursor: grabbing;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        @media (max-width: 1200px) {
+            .header {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .header-controls {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎓 Interactive Timetabling App</h1>
+        <div class="header-controls">
+            <div class="college-selector">
+                <select id="collegeSelect" onchange="switchCollege()">
+                    <option value="">Select College...</option>
+                </select>
+                <input type="text" id="newCollegeName" placeholder="New college name">
+                <button onclick="addCollege()">+ Add College</button>
+            </div>
+            <button class="btn btn-secondary">📥 Download PDF</button>
+        </div>
+    </div>
+
+    <div class="nav-tabs" id="navTabs"></div>
+
+    <div class="container">
+        <h2 class="timetable-title" id="timetableTitle">Select a college to view timetable</h2>
+        <div id="timetableContainer"></div>
+    </div>
+
+    <script>
+        // Data structure for colleges and timetables
+        let colleges = {};
+        let currentCollege = null;
+
+        // Initialize with sample data
+        function initializeSampleData() {
+            colleges = {
+                'moss-vale': {
+                    name: 'Moss Vale',
+                    timetable: {
+                        '9:00': {
+                            'Monday': ['11224NAT - Maths PFS', 'FSK20119 - Barista Espresso CII SWVP'],
+                            'Tuesday': ['11225NAT - English B TPC', '11224NAT - Biology PFS'],
+                            'Wednesday': ['11224NAT - MS365'],
+                            'Thursday': ['FSK20119 - Writing for Work CII'],
+                            'Friday': ['11224NAT - English A PFS']
+                        },
+                        '11:00': {
+                            'Monday': ['CSO - Maths/Science Support'],
+                            'Tuesday': ['FSK20119 - Reading for Work CII SWVP'],
+                            'Wednesday': ['11225NAT - Health TPC'],
+                            'Thursday': ['CSO - Computing Support', '11225NAT - Health TPC'],
+                            'Friday': ['FSK20119 - Workplace Communication CII SWVP']
+                        },
+                        '14:00': {
+                            'Monday': ['11225NAT - Maths B TPC'],
+                            'Tuesday': ['FSK20119 - Digital Literacy CII SWVP'],
+                            'Wednesday': ['11224NAT - Dig Lit Units PFS'],
+                            'Thursday': ['FSK20119 - Digital Literacy CII SWVP'],
+                            'Friday': []
+                        }
+                    }
+                },
+                'goulburn': {
+                    name: 'Goulburn',
+                    timetable: {
+                        '9:00': {
+                            'Monday': [],
+                            'Tuesday': [],
+                            'Wednesday': [],
+                            'Thursday': [],
+                            'Friday': []
+                        },
+                        '11:00': {
+                            'Monday': [],
+                            'Tuesday': [],
+                            'Wednesday': [],
+                            'Thursday': [],
+                            'Friday': []
+                        },
+                        '14:00': {
+                            'Monday': [],
+                            'Tuesday': [],
+                            'Wednesday': [],
+                            'Thursday': [],
+                            'Friday': []
+                        }
+                    }
+                }
+            };
+            updateCollegeSelector();
+        }
+
+        function updateCollegeSelector() {
+            const select = document.getElementById('collegeSelect');
+            select.innerHTML = '<option value="">Select College...</option>';
+            Object.keys(colleges).forEach(key => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = colleges[key].name;
+                select.appendChild(option);
+            });
+        }
+
+        function addCollege() {
+            const name = document.getElementById('newCollegeName').value.trim();
+            if (!name) {
+                alert('Please enter a college name');
+                return;
+            }
+
+            const key = name.toLowerCase().replace(/\s+/g, '-');
+            if (colleges[key]) {
+                alert('College already exists');
+                return;
+            }
+
+            colleges[key] = {
+                name: name,
+                timetable: {
+                    '9:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                    '11:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] },
+                    '14:00': { 'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': [] }
+                }
+            };
+
+            document.getElementById('newCollegeName').value = '';
+            updateCollegeSelector();
+            switchCollege(key);
+        }
+
+        function switchCollege(collegeKey = null) {
+            const select = document.getElementById('collegeSelect');
+            const key = collegeKey || select.value;
+
+            if (!key || !colleges[key]) {
+                document.getElementById('timetableContainer').innerHTML = '<div class="empty-state">Please select a college</div>';
+                document.getElementById('timetableTitle').textContent = 'Select a college to view timetable';
+                return;
+            }
+
+            currentCollege = key;
+            renderTimetable();
+        }
+
+        function renderTimetable() {
+            if (!currentCollege) return;
+
+            const college = colleges[currentCollege];
+            const timetable = college.timetable;
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const times = Object.keys(timetable).sort();
+
+            document.getElementById('timetableTitle').textContent = `${college.name} Timetable - Semester 1 2026`;
+
+            let html = '<table class="timetable"><thead><tr><th style="width: 80px;">Time</th>';
+            days.forEach(day => {
+                html += `<th class="day-column">${day}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            times.forEach(time => {
+                html += `<tr><td class="time-label">${time}</td>`;
+                days.forEach(day => {
+                    const sessions = timetable[time][day] || [];
+                    html += '<td class="day-column"><div class="time-slot">';
+                    sessions.forEach(session => {
+                        html += `<div class="session-block">${session}</div>`;
+                    });
+                    html += '</div></td>';
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('timetableContainer').innerHTML = html;
+
+            // Initialize drag and drop
+            initializeDragAndDrop();
+        }
+
+        function initializeDragAndDrop() {
+            const container = document.querySelector('.timetable');
+            if (!container) return;
+
+            makeDraggable({
+                container: container,
+                sessionSelector: '.session-block',
+                cellSelector: '.time-slot',
+                onDrop: (sessionEl, targetCell) => {
+                    targetCell.insertBefore(sessionEl, targetCell.children[0] || null);
+                }
+            });
+        }
+
+        /**
+         * Improved makeDraggable function with cell-level drop indicators
+         */
+        function makeDraggable(config) {
+            const {
+                container,
+                sessionSelector = '.session-block',
+                cellSelector = '.time-slot',
+                onDrop = () => {}
+            } = config;
+
+            const styleId = 'drag-override-styles';
+            if (!document.getElementById(styleId)) {
+                const style = document.createElement('style');
+                style.id = styleId;
+                style.textContent = `
+                    body.dragging .day-column:hover,
+                    body.dragging .time-slot:hover {
+                        background-color: transparent !important;
+                        box-shadow: none !important;
+                    }
+                    body.dragging .day-column {
+                        border-color: #d1d5db !important;
+                    }
+                    .drop-indicator {
+                        position: fixed;
+                        border: 2px dashed #3b82f6;
+                        background-color: rgba(59, 130, 246, 0.05);
+                        pointer-events: none;
+                        z-index: 9999;
+                        border-radius: 4px;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            const dropIndicator = document.createElement('div');
+            dropIndicator.className = 'drop-indicator';
+            dropIndicator.style.display = 'none';
+            document.body.appendChild(dropIndicator);
+
+            const sessions = container.querySelectorAll(sessionSelector);
+            sessions.forEach(session => {
+                session.addEventListener('mousedown', handleDragStart);
+            });
+
+            function handleDragStart(e) {
+                if (e.button !== 0) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                const sessionEl = e.currentTarget;
+                let isDragging = false;
+                let clone = null;
+                let startX = e.clientX;
+                let startY = e.clientY;
+
+                function handleMouseMove(e) {
+                    if (!isDragging && (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5)) {
+                        isDragging = true;
+                        document.body.classList.add('dragging');
+
+                        clone = sessionEl.cloneNode(true);
+                        clone.classList.add('drag-clone');
+                        Object.assign(clone.style, {
+                            position: 'fixed',
+                            zIndex: '10000',
+                            opacity: '0.8',
+                            pointerEvents: 'none',
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
+                        });
+                        document.body.appendChild(clone);
+                        sessionEl.style.visibility = 'hidden';
+                    }
+
+                    if (isDragging) {
+                        const rect = sessionEl.getBoundingClientRect();
+                        const offsetX = startX - rect.left;
+                        const offsetY = startY - rect.top;
+                        clone.style.left = `${e.clientX - offsetX}px`;
+                        clone.style.top = `${e.clientY - offsetY}px`;
+
+                        dropIndicator.style.display = 'none';
+                        const elements = document.elementsFromPoint(e.clientX, e.clientY);
+                        let targetCell = null;
+
+                        for (let el of elements) {
+                            if (el.matches(cellSelector) && el.closest('.day-column')) {
+                                targetCell = el;
+                                break;
+                            }
+                        }
+
+                        if (targetCell) {
+                            const rect = targetCell.getBoundingClientRect();
+                            Object.assign(dropIndicator.style, {
+                                display: 'block',
+                                left: `${rect.left}px`,
+                                top: `${rect.top}px`,
+                                width: `${rect.width}px`,
+                                height: `${rect.height}px`
+                            });
+                        }
+                    }
+                }
+
+                function handleMouseUp(e) {
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                    document.body.classList.remove('dragging');
+                    dropIndicator.style.display = 'none';
+
+                    if (isDragging && clone) {
+                        clone.remove();
+                        sessionEl.style.visibility = 'visible';
+
+                        const elements = document.elementsFromPoint(e.clientX, e.clientY);
+                        let targetCell = null;
+
+                        for (let el of elements) {
+                            if (el.matches(cellSelector) && el.closest('.day-column')) {
+                                targetCell = el;
+                                break;
+                            }
+                        }
+
+                        if (targetCell) {
+                            onDrop(sessionEl, targetCell, 0);
+                        }
+                    } else {
+                        sessionEl.style.visibility = 'visible';
+                    }
+                }
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeSampleData();
+        });
+    </script>
+</body>
+</html>
