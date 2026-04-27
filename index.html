@@ -298,7 +298,8 @@ const getNewSemesterData = (collegesList = null, config = {}) => ({
     staffNotes: {}, 
     tasks: [],
     localOfferingCodes: {},
-    rooms: {}
+    rooms: {},
+    courseNotes: {}
 });
 const saveData = () => localStorage.setItem('timetableDataV2', JSON.stringify(db));
 const loadData = () => {
@@ -318,6 +319,15 @@ db.semesters[semKey].staffNotes = {};
 }
 if (!db.semesters[semKey].tasks) {
 db.semesters[semKey].tasks = [];
+}
+if (!db.semesters[semKey].localOfferingCodes) {
+db.semesters[semKey].localOfferingCodes = {};
+}
+if (!db.semesters[semKey].rooms) {
+db.semesters[semKey].rooms = {};
+}
+if (!db.semesters[semKey].courseNotes) {
+db.semesters[semKey].courseNotes = {};
 }
 });
 } else {
@@ -2130,8 +2140,15 @@ gridHTML += `</tbody></table>`;
 container.innerHTML = `<div class="pdf-container"><div class="pdf-title"><h2>${title}</h2><h3>TAFE NSW Timetable (${db.currentSemester})</h3></div>${gridHTML}<div class="pdf-total-hours">Total Hours: <span class="pdf-total-hours-value">${totalHours.toFixed(2)}</span></div></div>`;
 }
 
-loadData();
-processAndRenderAll();
+try {
+    loadData();
+    processAndRenderAll();
+} catch(e) {
+    console.error('App Error:', e);
+    alert('⚠️ Error loading data. Resetting to defaults...');
+    localStorage.removeItem('timetableDataV2');
+    location.reload();
+}
 });
 </script>
 </body>
