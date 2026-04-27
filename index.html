@@ -296,9 +296,10 @@ const getNewSemesterData = (collegesList = null, config = {}) => ({
     colleges: collegesList || [...defaultColleges],
     config: { startTime: 8, endTime: 18, ...config },
     staffNotes: {}, 
-    tasks: [] 
+    tasks: [],
+    localOfferingCodes: {},
+    rooms: {}
 });
-
 const saveData = () => localStorage.setItem('timetableDataV2', JSON.stringify(db));
 const loadData = () => {
 const savedData = localStorage.getItem('timetableDataV2');
